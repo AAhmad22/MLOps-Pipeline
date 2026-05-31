@@ -1,6 +1,5 @@
 # MLOps Image Classifier
-
-An end-to-end machine learning deployment pipeline: a PyTorch image classifier
+[CI/CD](https://github.com/AAhmad22/MLOps-Pipeline/actions/workflows/ci-cd.yml/badge.svg)An end-to-end machine learning deployment pipeline: a PyTorch image classifier
 served as a containerised microservice, continuously tested and built by CI/CD,
 deployed to Kubernetes (AWS EKS), and monitored with Prometheus.
 
