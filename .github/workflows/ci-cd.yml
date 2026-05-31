@@ -47,9 +47,9 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set image tags
+      - name: Set lowercase image name
         id: meta
-        run: echo "tags=${REGISTRY}/${IMAGE_NAME}:${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+        run: echo "image=${REGISTRY}/${IMAGE_NAME,,}" >> "$GITHUB_OUTPUT"
 
       - name: Build and push
         uses: docker/build-push-action@v5
@@ -57,5 +57,5 @@ jobs:
           context: .
           push: true
           tags: |
-            ${{ steps.meta.outputs.tags }}
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+            ${{ steps.meta.outputs.image }}:${{ github.sha }}
+            ${{ steps.meta.outputs.image }}:latest
