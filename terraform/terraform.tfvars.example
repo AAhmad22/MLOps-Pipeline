@@ -1,0 +1,11 @@
+# Copy this file to terraform.tfvars and adjust as needed.
+# terraform.tfvars is gitignored so your settings stay local.
+
+region             = "ap-southeast-2"
+cluster_name       = "mlops-pipeline"
+kubernetes_version = "1.33"
+
+instance_types = ["t3.medium"]
+desired_size   = 2
+min_size       = 1
+max_size       = 3
