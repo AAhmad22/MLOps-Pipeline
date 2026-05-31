@@ -4,7 +4,7 @@ Infrastructure-as-code that provisions an AWS EKS cluster (VPC, subnets, NAT
 gateway, managed worker nodes) ready to run the image-classifier app from this
 repo. Built on the official `terraform-aws-modules` VPC and EKS modules.
 
-## ⚠️ Cost warning — read this first
+##  Cost warning — read this first
 
 **This is NOT free-tier.** Running `terraform apply` creates real, billable AWS
 resources:
