@@ -1,0 +1,20 @@
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      CLASS_NAMES: "cat,dog"
+      MODEL_PATH: "/app/artifacts/model.pt"
+    volumes:
+      # Mount a locally trained model in without rebuilding the image.
+      - ./artifacts:/app/artifacts:ro
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    depends_on:
+      - api

@@ -1,0 +1,95 @@
+name: CI/CD
+
+# Run the full pipeline on every push to main and on pull requests.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  IMAGE_NAME: ${{ github.repository }}   # e.g. your-user/mlops-image-classifier
+  REGISTRY: ghcr.io
+
+jobs:
+  # 1) Quality gate: lint + unit tests must pass before anything is built.
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Lint
+        run: ruff check src tests
+
+      - name: Run tests
+        run: pytest -q
+
+  # 2) Build the Docker image and push it to the registry (only on main).
+  build-and-push:
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write   # needed to push to GitHub Container Registry
+    outputs:
+      image: ${{ steps.meta.outputs.tags }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set image tags
+        id: meta
+        run: echo "tags=${REGISTRY}/${IMAGE_NAME}:${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ steps.meta.outputs.tags }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+
+  # 3) Deploy to the EKS cluster (only on main, after a successful build).
+  #    Commented out by default so the pipeline is green without AWS secrets.
+  #    To enable: add AWS_ROLE_ARN, AWS_REGION and EKS_CLUSTER as repo secrets,
+  #    then uncomment.
+  #
+  # deploy:
+  #   needs: build-and-push
+  #   runs-on: ubuntu-latest
+  #   permissions:
+  #     id-token: write   # for OIDC auth to AWS (no long-lived keys)
+  #     contents: read
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #
+  #     - name: Configure AWS credentials
+  #       uses: aws-actions/configure-aws-credentials@v4
+  #       with:
+  #         role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+  #         aws-region: ${{ secrets.AWS_REGION }}
+  #
+  #     - name: Update kubeconfig
+  #       run: aws eks update-kubeconfig --name ${{ secrets.EKS_CLUSTER }}
+  #
+  #     - name: Deploy
+  #       run: |
+  #         sed -i "s#IMAGE_PLACEHOLDER#${{ needs.build-and-push.outputs.image }}#" k8s/deployment.yaml
+  #         kubectl apply -f k8s/
+  #         kubectl rollout status deployment/image-classifier --timeout=120s

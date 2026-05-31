@@ -1,0 +1,11 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+# Trained model artifacts are large; track with Git LFS or a registry instead.
+artifacts/*.pt
+data/
+.DS_Store
+.env

@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: image-classifier
+  labels:
+    app: image-classifier
+spec:
+  # On EKS this provisions an AWS load balancer to expose the service,
+  # mirroring the LoadBalancer pattern from your nginx/EKS project.
+  type: LoadBalancer
+  selector:
+    app: image-classifier
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8000
